@@ -1,0 +1,54 @@
+
+{% extends 'daohang.html' %}
+
+{% block content %}
+
+
+<div>
+    <div class="container">
+        <div style="margin-bottom: 10px">
+                <a class="btn btn-success" href="/depart/add/">
+                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                    新建部门
+                </a>
+        </div>
+
+    <div class="panel panel-default">
+      <!-- Default panel contents -->
+      <div class="panel-heading">
+
+          <a href="#">
+              <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+              部门列表
+          </a>
+      </div>
+
+      <!-- Table -->
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>名称</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for obj in queryset %}
+          <tr>
+
+            <th>{{ obj.id }}</th>
+            <td>{{ obj.title }}</td>
+            <td>
+                <a href="/depart/{{obj.id}}/edit/" class="btn btn-primary btn-xs">编辑</a>
+                <a href="/depart/delete/?nid={{ obj.id }}" class="btn btn-danger btn-xs">删除</a>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+        </div>
+</div>
+
+{% endblock %}
+
