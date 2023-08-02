@@ -131,4 +131,7 @@ def user_model_form_add(request):
     # 校验失败  在页面上显示错误信息
     return render(request, "user_model_form_add.html", {'form': form})
 
+def user_model_form_edit(request):
+    pass
+
 
