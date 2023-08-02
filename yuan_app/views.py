@@ -85,21 +85,10 @@ def user_add(request):
     return redirect('/user/list/')
 
 
-def user_delete(request):
-    """删除部门"""
-    nid = request.GET.get('nid')
-    Department.objects.filter(id=nid).delete()
-    return redirect("/user/list/")
-
-
-# -==========================================
-# model form 案例
-
-
 class UserModelForm(forms.ModelForm):
-    name = forms.CharField(min_length=3,label="姓名")
-    password = forms.CharField(min_length=8,label="密码")
-    age = forms.CharField(min_length=2,label="年龄")
+    name = forms.CharField(min_length=3, label="姓名")
+    password = forms.CharField(min_length=8, label="密码")
+    age = forms.CharField(min_length=2, label="年龄")
     account = forms.CharField(label="余额")
     create_time = forms.DateTimeField(label="入职时间")
 
@@ -125,13 +114,31 @@ def user_model_form_add(request):
     if form.is_valid():
         # print(form.cleaned_data)
         # UserInfo.objects.create()
+
+        # 保存用户输入的值
         form.save()
         return redirect('/user/list/')
 
     # 校验失败  在页面上显示错误信息
     return render(request, "user_model_form_add.html", {'form': form})
 
-def user_model_form_edit(request):
-    pass
+
+def user_model_form_edit(request, nid):
+    """编辑用户"""
+    if request.method == "GET":
+        # 查询并展示默认的数据
+        row_object = UserInfo.objects.filter(id=nid).first()
+        form = UserModelForm(instance=row_object)
+        return render(request, "user_model_form_edit.html", {'form': form})
+    row_object = UserInfo.objects.filter(id=nid).first()
+    form = UserModelForm(data=request.POST, instance=row_object)
+    if form.is_valid():
+        # 保存用户输入的值
+        form.save()
+        return redirect('/user/list/')
+    return render(request, 'user_model_form_edit.html', {"form": form})
 
 
+def user_delete(request, nid):
+    UserInfo.objects.filter(id=nid).delete()
+    return redirect('/user/list/')
