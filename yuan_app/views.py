@@ -170,7 +170,7 @@ def pretty_list(request):
     total_count = PrettyNum.objects.filter(**data_dict).order_by('-level').count()
 
     # 总页码
-    total_page_count,div = divmod(total_count,pagesize)
+    total_page_count,div = divmod(total_count,pagesize)8
     if div:
         total_page_count += 1
 
