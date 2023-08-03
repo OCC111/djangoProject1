@@ -5,6 +5,7 @@ from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 
+
 # Create your views here.
 
 def depart_list(request):
@@ -149,7 +150,7 @@ def user_delete(request, nid):
 def pretty_list(request):
     """靓号列表"""
     # mob = 13812347894
-    # for i in range(300):
+    # for i in range(100):
     #     mobile = mob + 1
     #     PrettyNum.objects.create(mobile=mobile,price=10,level=2,status=1)
 
@@ -170,28 +171,55 @@ def pretty_list(request):
     total_count = PrettyNum.objects.filter(**data_dict).order_by('-level').count()
 
     # 总页码
-    total_page_count,div = divmod(total_count,pagesize)8
+    total_page_count, div = divmod(total_count, pagesize)
     if div:
         total_page_count += 1
 
     # 计算出 显示当前页的前5页 后5页
     plus = 5
-    if total_page_count <= 2 * plus +1:
+    if total_page_count <= 2 * plus + 1:
         start_page = 1
         end_page = total_page_count
     else:
-        start_page = page - plus
-
-        end_page = page + plus + 1
+        # 当前页小于5时
+        if page <= plus:
+            start_page = 1
+            end_page = 2 * plus + 1
+        else:
+            if (page + plus) > total_page_count:
+                start_page = total_page_count - 2 * plus
+                end_page = total_page_count
+            else:
+                start_page = page - plus
+                end_page = page + plus
 
     # 页码
     page_str_list = []
-    for i in range(start_page,end_page):
+
+    # 上一页
+    if page > 1:
+        prev = '<li><a href="?page={}">上一页</a></li>'.format(page - 1)
+    else:
+        prev = '<li><a href="?page={}">上一页</a></li>'.format(1)
+    page_str_list.append(prev)
+
+    # 页面
+    for i in range(start_page, end_page + 1):
         if i == page:
-            ele = '<li class="active"><a href="?page={}">{}</a></li>'.format(i,i)
+            ele = '<li class="active"><a href="?page={}">{}</a></li>'.format(i, i)
         else:
-            ele = '<li><a href="?page={}">{}</a></li>'.format(i,i)
+            ele = '<li><a href="?page={}">{}</a></li>'.format(i, i)
         page_str_list.append(ele)
+
+    # 下一页
+    if page < total_page_count:
+        prev = '<li><a href="?page={}">下一页</a></li>'.format(page + 1)
+    else:
+        prev = '<li><a href="?page={}">下一页</a></li>'.format(total_page_count)
+    page_str_list.append(prev)
+
+    # 尾页
+    page_str_list.append('<li><a href="?page={}">尾页</a></li>'.format(total_page_count))
     page_string = mark_safe("".join(page_str_list))
 
     return render(
@@ -312,5 +340,3 @@ def pretty_edit(request, nid):
 def pretty_delete(request, nid):
     PrettyNum.objects.filter(id=nid).delete()
     return redirect('/pretty/list/')
-
-
