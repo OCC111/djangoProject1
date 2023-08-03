@@ -2,20 +2,30 @@
 
 {% block content %}
 
-<div>
-    <div class="container">
-        <div style="margin-bottom: 10px">
-            <!--
-            <a class="btn btn-success" href="/user/add/">
-                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                添加用户
-            </a>  -->
 
+    <div class="container">
+        <div style="margin-bottom: 10px" class="clearfix">
             <!-- model form 编写的添加 -->
             <a class="btn btn-success" href="/pretty/add/">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                 录入靓号
             </a>
+
+            <div style="float: right;width:300px;">
+                <form method="get">
+            <div class="input-group">
+
+                    <input type="text" name="q" class="form-control" placeholder="Search for..." value="{{ search_data }}">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="submit">
+                            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                        </button>
+                    </span>
+
+            </div><!-- /input-group -->
+                    </form>
+        </div>
+
         </div>
 
         <div class="panel panel-default">
@@ -42,25 +52,24 @@
                 </thead>
                 <tbody>
                 {% for obj in queryset %}
-                <tr>
+                    <tr>
 
-                    <th>{{ obj.id }}</th>
-                    <td>{{ obj.mobile }}</td>
-                    <td>{{ obj.price }}</td>
-                    <td>{{ obj.get_level_display }}</td>
-                    <td>{{ obj.get_status_display }}</td>
+                        <th>{{ obj.id }}</th>
+                        <td>{{ obj.mobile }}</td>
+                        <td>{{ obj.price }}</td>
+                        <td>{{ obj.get_level_display }}</td>
+                        <td>{{ obj.get_status_display }}</td>
 
 
-                    <td>
-                        <a href="/user/{{obj.id}}/edit/" class="btn btn-primary btn-xs">编辑</a>
-                        <a href="/user/{{ obj.id }}/delete/" class="btn btn-danger btn-xs">删除</a>
-                    </td>
-                </tr>
+                        <td>
+                            <a href="/pretty/{{ obj.id }}/edit/" class="btn btn-primary btn-xs">编辑</a>
+                            <a href="/pretty/{{ obj.id }}/delete/" class="btn btn-danger btn-xs">删除</a>
+                        </td>
+                    </tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-</div>
 
 {% endblock %}

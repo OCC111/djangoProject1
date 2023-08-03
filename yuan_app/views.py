@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect
 from yuan_app.models import Department, UserInfo, PrettyNum
 from django import forms
+from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 
 
 # Create your views here.
@@ -146,12 +148,28 @@ def user_delete(request, nid):
 
 def pretty_list(request):
     """靓号列表"""
-    if request.method == "GET":
-        queryset = PrettyNum.objects.all().order_by("-level")
-        return render(request, 'pretty_list.html', {"queryset": queryset})
+    data_dict = {}
+    search_data = request.GET.get('q', "")
+    if search_data:
+        data_dict["mobile__contains"] = search_data
+
+    # 根据用户要访问的页码 计算出起止位置
+    page = int(request.GET.get('page', 1))
+    pagesize = 5
+    start = (page - 1) * pagesize
+    end = page * pagesize
+    queryset = PrettyNum.objects.filter(**data_dict).order_by("-level")[start:end]
+    return render(request, 'pretty_list.html', {"queryset": queryset, "search_data": search_data})
 
 
 class PrettyModelForm(forms.ModelForm):
+    # 验证方式1  正则表达式校验
+    mobile = forms.CharField(
+        label="手机号",
+        validators=[RegexValidator(r'^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$',
+                                   "手机号格式错误")]
+    )
+
     class Meta:
         model = PrettyNum
         fields = ["mobile", "price", "level", "status"]
@@ -161,6 +179,21 @@ class PrettyModelForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for name, field in self.fields.items():
             field.widget.attrs = {"class": "form-control", "placeholder": field.label}
+
+    # 钩子方法
+    def clean_mobile(self):
+
+        # self.instance.pk
+        # 用户输入的所有的值
+        txt_mobile = self.cleaned_data["mobile"]
+        exists = PrettyNum.objects.filter(mobile=txt_mobile).exists()
+        if exists:
+            raise ValidationError("手机号已存在")
+        if len(txt_mobile) != 11:
+            # 验证不通过
+            raise ValidationError("手机号必须是11位")
+        # 验证通过  用户输入的值返回
+        return txt_mobile
 
 
 def pretty_add(request):
@@ -179,3 +212,64 @@ def pretty_add(request):
 
     # 校验失败  在页面上显示错误信息
     return render(request, "pretty_add.html", {'form': form})
+
+
+class PrettyEditModelForm(forms.ModelForm):
+    # 验证方式1  正则表达式校验
+    mobile = forms.CharField(
+        label="手机号",
+        validators=[RegexValidator(r'^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$',
+                                   "手机号格式错误")]
+    )
+
+    class Meta:
+        model = PrettyNum
+        fields = ["mobile", "price", "level", "status"]
+        # fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            field.widget.attrs = {"class": "form-control", "placeholder": field.label}
+
+    # 钩子方法
+    def clean_mobile(self):
+
+        # self.instance.pk
+        # 用户输入的所有的值
+        txt_mobile = self.cleaned_data["mobile"]
+        # 排除自己以外的 其他手机号是否重复
+        exists = PrettyNum.objects.exclude(id=self.instance.pk).filter(mobile=txt_mobile).exists()
+        if exists:
+            raise ValidationError("手机号已存在")
+        if len(txt_mobile) != 11:
+            # 验证不通过
+            raise ValidationError("手机号必须是11位")
+        # 验证通过  用户输入的值返回
+        return txt_mobile
+
+
+def pretty_edit(request, nid):
+    """修改靓号"""
+    # 查询出默认数据并显示
+    row_object = PrettyNum.objects.filter(id=nid).first()
+    if request.method == "GET":
+        # 查询并展示默认的数据
+        form = PrettyEditModelForm(instance=row_object)
+        return render(request, "pretty_edit.html", {'form': form})
+
+    form = PrettyEditModelForm(data=request.POST, instance=row_object)
+    if form.is_valid():
+        # 保存用户输入的值
+        form.save()
+        return redirect('/pretty/list/')
+    return render(request, 'pretty_edit.html', {"form": form})
+
+
+def pretty_delete(request, nid):
+    PrettyNum.objects.filter(id=nid).delete()
+    return redirect('/pretty/list/')
+
+
+def pretty_serach(request):
+    return render(request, 'pretty_serach.html')

@@ -30,6 +30,9 @@ urlpatterns = [
     path('user/<int:nid>/edit/', views.user_model_form_edit),
     path('user/<int:nid>/delete/', views.user_delete),
 
-    path('pretty/list/',views.pretty_list),  # 靓号列表
-    path('pretty/add/',views.pretty_add),  # 录入靓号
+    path('pretty/list/', views.pretty_list),  # 靓号列表
+    path('pretty/add/', views.pretty_add),  # 录入靓号
+
+    path('pretty/<int:nid>/edit/', views.pretty_edit),
+    path('pretty/<int:nid>/delete/', views.pretty_delete),
 ]
