@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from yuan_app.models import Department, UserInfo
+from yuan_app.models import Department, UserInfo, PrettyNum
 from django import forms
 
 
@@ -142,3 +142,40 @@ def user_model_form_edit(request, nid):
 def user_delete(request, nid):
     UserInfo.objects.filter(id=nid).delete()
     return redirect('/user/list/')
+
+
+def pretty_list(request):
+    """靓号列表"""
+    if request.method == "GET":
+        queryset = PrettyNum.objects.all().order_by("-level")
+        return render(request, 'pretty_list.html', {"queryset": queryset})
+
+
+class PrettyModelForm(forms.ModelForm):
+    class Meta:
+        model = PrettyNum
+        fields = ["mobile", "price", "level", "status"]
+        # fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            field.widget.attrs = {"class": "form-control", "placeholder": field.label}
+
+
+def pretty_add(request):
+    if request.method == "GET":
+        form = PrettyModelForm()
+        return render(request, 'pretty_add.html', {"form": form})
+
+    form = PrettyModelForm(data=request.POST)
+    if form.is_valid():
+        # print(form.cleaned_data)
+        # UserInfo.objects.create()
+
+        # 保存用户输入的值
+        form.save()
+        return redirect('/pretty/list/')
+
+    # 校验失败  在页面上显示错误信息
+    return render(request, "pretty_add.html", {'form': form})

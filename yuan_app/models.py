@@ -35,6 +35,77 @@ class UserInfo(models.Model):
     depart = models.ForeignKey(verbose_name="部门",to='Department',to_field='id',on_delete=models.SET_NULL,null=True,blank=True)
 
 
+class PrettyNum(models.Model):
+    """英雄联盟 游戏靓号表"""
+    mobile = models.CharField(verbose_name="手机号",max_length=11)
+    # 想要允许为空 null=True  blank=True
+    price = models.IntegerField(verbose_name="价格",default=0)
+
+    level_choices = (
+        (1,'黑铁'),
+        (2,'青铜'),
+        (3,'黄金'),
+        (4,'铂金'),
+        (5,'钻石'),
+        (6,'大师'),
+        (7,'王者'),
+    )
+
+    level = models.SmallIntegerField(verbose_name="级别",choices=level_choices,default=1)
+
+    status_choices = (
+        (1,"已售出"),
+        (2,"未使用"),
+    )
+
+    status = models.SmallIntegerField(verbose_name="状态",choices=status_choices,default=2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
