@@ -4,6 +4,7 @@ from django import forms
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
+from yuan_app.utils.paginstion import Paginstion
 
 
 # Create your views here.
@@ -51,41 +52,60 @@ def depart_edit(request, nid):
 
 def user_list(request):
     """用户列表"""
-    user_set = UserInfo.objects.all()
+    # user_set = UserInfo.objects.all()
+    # return render(request, 'user_list.html', {'user_set': user_set})
 
-    return render(request, 'user_list.html', {'user_set': user_set})
+    user_dict = {}
+    search_data = request.GET.get('q', "")
+    if search_data:
+        user_dict["name__contains"] = search_data
 
+    queryset = UserInfo.objects.filter(**user_dict)
+    page_object = Paginstion(request, queryset, page_size=5)
 
-def user_add(request):
-    """ 添加用户  原始方法"""
-    if request.method == "GET":
-        context = {
-            'gender_choies': UserInfo.gender_choices,
-            'depart_list': Department.objects.all()
-        }
-        return render(request, 'user_add.html', context)
+    context = {
+        "search_data": search_data,
+        "queryset": page_object.page_queryset,  # 分完页的数据
+        "page_string": page_object.html,  # 页码
+    }
 
-    name = request.POST.get('name')
-    password = request.POST.get('password')
-    age = request.POST.get('age')
-    account = request.POST.get('account')
-    ctime = request.POST.get('ctime')
-    gender = request.POST.get('gd')
-    depart_id = request.POST.get('dp')
-
-    # 添加数据到数据库中
-    UserInfo.objects.create(
-        name=name,
-        password=password,
-        age=age,
-        account=account,
-        create_time=ctime,
-        gender=gender,
-        depart_id=depart_id
-
+    return render(
+        request,
+        'user_list.html',
+        context
     )
 
-    return redirect('/user/list/')
+
+# def user_add(request):
+#     """ 添加用户  原始方法"""
+#     if request.method == "GET":
+#         context = {
+#             'gender_choies': UserInfo.gender_choices,
+#             'depart_list': Department.objects.all()
+#         }
+#         return render(request, 'user_add.html', context)
+#
+#     name = request.POST.get('name')
+#     password = request.POST.get('password')
+#     age = request.POST.get('age')
+#     account = request.POST.get('account')
+#     ctime = request.POST.get('ctime')
+#     gender = request.POST.get('gd')
+#     depart_id = request.POST.get('dp')
+#
+#     # 添加数据到数据库中
+#     UserInfo.objects.create(
+#         name=name,
+#         password=password,
+#         age=age,
+#         account=account,
+#         create_time=ctime,
+#         gender=gender,
+#         depart_id=depart_id
+#
+#     )
+#
+#     return redirect('/user/list/')
 
 
 class UserModelForm(forms.ModelForm):
@@ -105,6 +125,19 @@ class UserModelForm(forms.ModelForm):
             # if name == "password":
             #     continue
             field.widget.attrs = {"class": "form-control", "placeholder": field.label}
+
+        # 钩子方法
+
+    def clean_name(self):
+
+        # self.instance.pk
+        # 用户输入的所有的值
+        txt_name = self.cleaned_data["name"]
+        exists = UserInfo.objects.filter(name=txt_name).exists()
+        if exists:
+            raise ValidationError("用户已存在")
+        # 验证通过  用户输入的值返回
+        return txt_name
 
 
 def user_model_form_add(request):
@@ -159,77 +192,19 @@ def pretty_list(request):
     if search_data:
         data_dict["mobile__contains"] = search_data
 
-    # 根据用户要访问的页码 计算出起止位置
-    page = int(request.GET.get('page', 1))
-    pagesize = 20
-    start = (page - 1) * pagesize
-    end = page * pagesize
+    queryset = PrettyNum.objects.filter(**data_dict).order_by("-level")
+    page_object = Paginstion(request, queryset)
 
-    queryset = PrettyNum.objects.filter(**data_dict).order_by("-level")[start:end]
-
-    # 数据总条数
-    total_count = PrettyNum.objects.filter(**data_dict).order_by('-level').count()
-
-    # 总页码
-    total_page_count, div = divmod(total_count, pagesize)
-    if div:
-        total_page_count += 1
-
-    # 计算出 显示当前页的前5页 后5页
-    plus = 5
-    if total_page_count <= 2 * plus + 1:
-        start_page = 1
-        end_page = total_page_count
-    else:
-        # 当前页小于5时
-        if page <= plus:
-            start_page = 1
-            end_page = 2 * plus + 1
-        else:
-            if (page + plus) > total_page_count:
-                start_page = total_page_count - 2 * plus
-                end_page = total_page_count
-            else:
-                start_page = page - plus
-                end_page = page + plus
-
-    # 页码
-    page_str_list = []
-
-    # 上一页
-    if page > 1:
-        prev = '<li><a href="?page={}">上一页</a></li>'.format(page - 1)
-    else:
-        prev = '<li><a href="?page={}">上一页</a></li>'.format(1)
-    page_str_list.append(prev)
-
-    # 页面
-    for i in range(start_page, end_page + 1):
-        if i == page:
-            ele = '<li class="active"><a href="?page={}">{}</a></li>'.format(i, i)
-        else:
-            ele = '<li><a href="?page={}">{}</a></li>'.format(i, i)
-        page_str_list.append(ele)
-
-    # 下一页
-    if page < total_page_count:
-        prev = '<li><a href="?page={}">下一页</a></li>'.format(page + 1)
-    else:
-        prev = '<li><a href="?page={}">下一页</a></li>'.format(total_page_count)
-    page_str_list.append(prev)
-
-    # 尾页
-    page_str_list.append('<li><a href="?page={}">尾页</a></li>'.format(total_page_count))
-    page_string = mark_safe("".join(page_str_list))
+    context = {
+        "search_data": search_data,
+        "queryset": page_object.page_queryset,  # 分完页的数据
+        "page_string": page_object.html,  # 页码
+    }
 
     return render(
         request,
         'pretty_list.html',
-        {
-            "queryset": queryset,
-            "search_data": search_data,
-            "page_string": page_string,
-        }
+        context
     )
 
 
